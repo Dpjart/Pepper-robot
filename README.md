@@ -285,10 +285,6 @@ The waypoints will be saved in a json file.
 If you want to start a tour, type tour in the terminal, in which it will start its tour, from the points.
 
 
-
-
-
-```md
 ### ROS 2 topics
 
 | Topic | Type | Purpose |
@@ -299,13 +295,7 @@ If you want to start a tour, type tour in the terminal, in which it will start i
 | `/tour_command` | `std_msgs/String` | Receives command such as `start` |
 | `/talk_command` | `std_msgs/String` | Sends current waypoint ID to the talking/explainer node |
 | `/done_talking` | `std_msgs/String` | Receives confirmation that the explanation is finished |
-## Task 6: Pepper Explanation
 
-This task runs Pepper’s explanation behavior.
+## Known Limitations
 
-Go to the ROS2 workspace:
-
-```sh
-cd ~/p_ws
-```
-
+- Pepper’s NAOqi driver runs in ROS1, requiring a ROS1–ROS2 bridge.
