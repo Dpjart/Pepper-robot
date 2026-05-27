@@ -15,8 +15,8 @@ The system is designed to support an interactive Pepper robot tour-guide applica
 
 The robot should be able to:
 
-- Greet visitors and initiate guided tours
-- Navigate safely through dynamic and crowded environments
+
+- Navigate through a confined environment
 - Provide explanations and contextual information at designated locations
 - Respond to voice commands and basic conversational prompts
 - Use gestures and expressive behaviours to create a welcoming interaction
@@ -158,47 +158,9 @@ These commands disable autonomous life and wake up Pepper’s motors.
 
 ---
 
-## Task 2: Pepper Speech with Explanation Gesture
+## Task 2: Pepper Person Following
 
-This task makes Pepper speak while performing an explanation gesture.
-
-Go to the ROS2 workspace:
-
-```sh
-cd ~/p_ws
-```
-
-Source ROS2:
-
-```sh
-source /opt/ros/humble/setup.bash
-```
-
-Source the workspace:
-
-```sh
-source install/setup.bash
-```
-
-Run the node:
-
-```sh
-ros2 run ps wave
-```
-
-Expected result:
-
-Pepper will speak and perform an explaining gesture related to the artifact or presentation content.
-
-Known issues:
-
-No known issues have been noticed in this task.
-
----
-
-## Task 3: Pepper Person Following
-
-This task allows Pepper to detect a person, wave, and then follow the person.
+This task allows Pepper to listen to "Hey Pepper" using its inbuilt sound localization and turns around to that sound and follows that person.
 
 Go to the ROS2 workspace:
 
@@ -229,68 +191,13 @@ No known issues have been noticed in this task.
 
 ---
 
-## Task 4: Pepper Exploration Map and Navigation
+## Task 4: Pepper Exploration Map 
 
-This task focuses on creating a map for navigation using SLAM Toolbox.
+This task focuses on creating a map for navigation using Peppers inbuilt navigation system.
 
-This part of the system is still a work in progress.
-
-Go to the ROS2 workspace:
-
-```sh
-cd ~/p_ws
-```
-
-Source ROS2 and the workspace:
-
-```sh
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-```
-
-Run SLAM Toolbox:
-
-```sh
-ros2 run slam_toolbox async_slam_toolbox_node \
-  --ros-args \
-  -p odom_frame:=odom \
-  -p base_frame:=base_footprint \
-  -p map_frame:=map \
-  -p minimum_laser_range:=0.1 \
-  -p max_laser_range:=10.0 \
-  -p transform_timeout:=0.5
-```
-
-Save the generated map:
-
-```sh
-ros2 service call /slam_toolbox/save_map slam_toolbox/srv/SaveMap "{name: {data: '/home/wayfarer/p_ws/src/ps/maps/pepper_slam_map'}}"
-```
-
-Launch Nav2 using the saved map:
-
-```sh
-ros2 launch nav2_bringup bringup_launch.py \
-  map:=/home/wayfarer/p_ws/src/ps/maps/pepper_slam_map.yaml \
-  params_file:=/home/wayfarer/p_ws/src/ps/config/nav2_params.yaml \
-  use_sim_time:=false
-```
-
-Known issues:
-
-Pepper’s laser sensor provides only around 60 laser points, while the SLAM setup expects 64 laser points. Because of this, an additional correction node is run alongside the SLAM system:
-
-```sh
-ros2 run ps say
-```
-
-Pepper’s laser sensor is older and requires further tuning for stable SLAM and navigation. This part still needs more testing and improvement.
-
----
-
-## Task 5: Train and Detect Object
-
-This task uses Pepper’s vision recognition system to train and detect a specific object.
+Step 1: Place Pepper in a spce to give tour
+Step 2: Place the Artifacts for the tour.
+Then run run the codes below
 
 Go to the ROS2 workspace:
 
@@ -305,32 +212,93 @@ source /opt/ros/humble/setup.bash
 source install/setup.bash
 ```
 
-Take images of the required object.
-
-Save the images on Pepper at:
+Run The python file to create the map:
 
 ```sh
-/home/nao/artifacts/
-```
+ros2 run ps exp
 
-Run the training node from the ROS2 side:
+```
+The generated map will be saved in pepper as a explo file. 
+
+Before going to the next task copy the explo file name, can be seen in the terminal after the follow.py file has completed its task
+
+An example of the file name is 2014-04-04T053142.378Z.explo. (THIS IS AN EXAMPLE DONT USE THIS, YOUR FILE NAME WILL BE DIFFERENT)
+
+## Task 5: Marking the points on the map for the tour.
+Before running this make to sure to run pepper talk file in a terminal 
+```sh
+ros2 run ps ptalk
+```
+This will establish a connection to the system with the chat bot
+
+Paste the file explo file name in the tour.py file in line 19
+
+EXPLO_FILE = "/home/nao/.local/share/Explorer/2014-04-04T053142.378Z.explo"
+
+and save it.
+
+Continue from the last task 
+
+In the terminal
+```sh
+ros2 run ps tour
+```
+It loads a saved Pepper exploration map (`.explo`), localizes Pepper inside the map, saves waypoint positions, and navigates to saved tour points. The node can run a full tour or follow a waypoint order sent from the tablet through the `/tsp_command` topic.
+
+Give It sosme time, it  will take a while to localize in the map.
+
+### Main features
+
+- Connects to Pepper using NAOqi
+- Loads a saved `.explo` exploration map
+- Relocalizes Pepper in the map
+- Saves current Pepper position as numbered waypoints
+- Navigates to saved waypoints using `navigateToInMap`
+- Receives selected waypoint order from the tablet through `/tsp_command`
+- Publishes tour status on `/tour_status`
+- Publishes the current point to the talk/explainer system through `/talk_command`
+- Waits for `/done_talking` before moving to the next waypoint
+
+## Tour Navigation Commands
+
+After running the tour navigation node, the terminal will show:
 
 ```sh
-ros2 run ps train
+Commands: localize, pos, save, go, tour, list, q
 ```
 
-To detect the trained object:
+Some info for the commands 
+pos: current position of the robot
+save: save the position as
+go: go to the save point
+tour: give tour on all this points
+list: show the saved points
+q: quit
 
+run teleop in another terminal to operate pepper
 ```sh
-ros2 run ps detect
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
+Then operate the Pepper to the artifacts location and save those way points.
+The waypoints will be saved in a json file. 
 
-Expected result:
+If you want to start a tour, type tour in the terminal, in which it will start its tour, from the points.
 
-Pepper should detect the trained object when it is visible to the camera.
 
----
 
+
+
+```md
+### ROS 2 topics
+
+| Topic | Type | Purpose |
+|---|---|---|
+| `/tour_status` | `std_msgs/String` | Publishes current tour status |
+| `/artifact_point` | `std_msgs/String` | Publishes reached point ID for artifact/tablet use |
+| `/tsp_command` | `social_robot_interfaces/TspCommand` | Receives ordered waypoints from the tablet |
+| `/tour_command` | `std_msgs/String` | Receives command such as `start` |
+| `/talk_command` | `std_msgs/String` | Sends current waypoint ID to the talking/explainer node |
+| `/done_talking` | `std_msgs/String` | Receives confirmation that the explanation is finished |
 ## Task 6: Pepper Explanation
 
 This task runs Pepper’s explanation behavior.
@@ -341,46 +309,3 @@ Go to the ROS2 workspace:
 cd ~/p_ws
 ```
 
-Source ROS2 and the workspace:
-
-```sh
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-```
-
-Run the explanation node:
-
-```sh
-ros2 run ps gat
-```
-
-Expected result:
-
-Pepper will perform the explanation behavior using speech and interaction features.
-
----
-
-## Current Status
-
-The system currently supports:
-
-- ROS1 NAOqi driver connection
-- ROS1–ROS2 topic bridging
-- Pepper speech
-- Pepper gestures
-- Person following
-- Object training and detection
-- Initial SLAM and map saving experiments
-- Early Nav2 integration
-
-Navigation and SLAM are still under development due to limitations with Pepper’s onboard laser sensor and the need for additional parameter tuning.
-
----
-
-## Known Limitations
-
-- Pepper’s NAOqi driver runs in ROS1, requiring a ROS1–ROS2 bridge.
-- SLAM and Nav2 integration are still unstable.
-- Pepper’s laser sensor has a low number of scan points.
-- Navigation requires further testing in real environments.
-- Some behaviours depend on Pepper’s physical condition, network stability, and correct NAOqi service availability.
